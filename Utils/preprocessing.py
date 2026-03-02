@@ -111,7 +111,7 @@ def change_index(text: str, text_span: str, start_idx: int, end_idx: int) -> Tup
     return (start_idx, end_idx)
 
 
-def main(datatype: str = "trains"):
+def main(datatype: str = "train"):
     cwd = os.getcwd()
     if cwd.endswith("Utils"):
         cwd = os.path.dirname(cwd)
