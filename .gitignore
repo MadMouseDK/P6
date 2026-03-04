@@ -3,3 +3,9 @@ Data/**
 !Data/**/.gitkeep
 .ipynb_checkpoints
 __pycache__
+venv
+.venv
+.venv/
+venv/
+env/
+ENV/
