@@ -34,3 +34,29 @@ def micro_average_recall() -> float:
 def average_f1_score(precesion, recall) -> float:
     return 2 * ((precesion * recall) / (precesion + recall))
 
+
+
+
+#
+def evaluate(model, dataset):
+
+    total_pred = 0
+    total_true = 0
+    correct = 0
+
+    for text, gold_entities in dataset:
+
+        predicted = model.predict(text)
+
+        total_pred += len(predicted)
+        total_true += len(gold_entities)
+
+        for ent in predicted:
+            if ent in gold_entities:
+                correct += 1
+
+    precision = correct / total_pred
+    recall = correct / total_true
+    f1 = 2 * precision * recall / (precision + recall)
+
+    return precision, recall, f1
