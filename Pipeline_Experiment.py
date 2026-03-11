@@ -1,6 +1,5 @@
 from Utils.preprocessing import *
 from Utils.evaluation_metrics import *
-from Utils.scorer import evaluate_model
 from Models.spacy_models import load_spacy_model
 import scispacy
 
