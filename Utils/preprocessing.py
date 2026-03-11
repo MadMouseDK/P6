@@ -26,6 +26,13 @@ def load_dataset(data: str, root_path: str) -> pd.DataFrame:
         #train_bronze_df = pd.read_json(os.path.join(data_path, "bronze_quality/json_format/train_bronze.json"), orient="index")
         return pd.concat([train_gold_df, train_silver2025_df, train_silver_df], axis=0)
     
+def load_docs(path):
+
+    nlp = spacy.blank("en")
+    docbin = DocBin().from_disk(path)
+    docs = list(docbin.get_docs(nlp.vocab))
+
+    return docs
 
 def extracts_entities(df: pd.DataFrame) -> pd.DataFrame:
     title_information = dict()
@@ -111,7 +118,8 @@ def change_index(text: str, text_span: str, start_idx: int, end_idx: int) -> Tup
     return (start_idx, end_idx)
 
 
-def main(datatype: str = "train"):
+
+def preprocessing(datatype: str = "train"):
     cwd = os.getcwd()
     if cwd.endswith("Utils"):
         cwd = os.path.dirname(cwd)
@@ -164,8 +172,11 @@ def main(datatype: str = "train"):
     db.to_disk(path)
     print(num_warnings)
 
+
+
+
 if __name__ == "__main__":
-    main()
+    preprocessing()
     
 
     
