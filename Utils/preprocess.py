@@ -75,7 +75,69 @@ nlp = spacy.load("en_core_web_sm")
 #print(data.head()) 
 
 
-data["tokens"] = data["text"].apply(spacy_tokenize)
-data['normalized_tokens'] = data['text'].apply(normalize)
 
-print(data)
+#data["tokens"] = data["text"].apply(spacy_tokenize)
+#data['normalized_tokens'] = data['text'].apply(normalize)
+
+
+def tokenize_with_spans(text):
+    tokens = []
+    spans = []
+
+    for match in re.finditer(r"\S+", text):
+        tokens.append(match.group())
+        spans.append((match.start(), match.end()))
+
+    return tokens, spans
+
+def convert_entities(entities):
+    return [
+        {
+            "start": i[0],
+            "end": i[1],
+            "label": i[2]
+        }
+        for i in entities
+    ]
+
+def spans_to_bio(text, entities):
+    tokens, token_spans = tokenize_with_spans(text)
+    labels = ["Ø"] * len(tokens)
+
+    entities = convert_entities(entities)
+
+    for ent in entities:
+        ent_start = ent["start"]
+        ent_end = ent["end"]
+        ent_label = ent["label"].replace(" ", "_").upper()
+
+        for i, (tok_start, tok_end) in enumerate(token_spans):
+
+            # overlap condition
+            if tok_end <= ent_start:
+                continue
+            if tok_start >= ent_end:
+                continue
+
+            if tok_start == ent_start:
+                labels[i] = f"B-{ent_label}"
+            else:
+                labels[i] = f"I-{ent_label}"
+
+    return tokens, labels
+
+def build_dataset(data):
+    tokens_list = []
+    labels_list = []
+
+    for _, row in data.iterrows():
+        tokens, labels = spans_to_bio(row["text"], row["entities"])
+        tokens_list.append(tokens)
+        labels_list.append(labels)
+
+    return tokens_list, labels_list
+
+
+y_true = build_dataset(data)
+
+print(y_true[0][2])
