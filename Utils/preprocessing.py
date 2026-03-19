@@ -111,7 +111,7 @@ def change_index(text: str, text_span: str, start_idx: int, end_idx: int) -> Tup
     return (start_idx, end_idx)
 
 
-def main(datatype: str = "train"):
+def preprocessing(datatype: str = "train"):
     cwd = os.getcwd()
     if cwd.endswith("Utils"):
         cwd = os.path.dirname(cwd)
@@ -165,7 +165,7 @@ def main(datatype: str = "train"):
     print(num_warnings)
 
 if __name__ == "__main__":
-    main()
+    preprocessing()
     
 
     
