@@ -6,6 +6,8 @@ from tqdm import tqdm
 import pickle
 import os
 from spacy.util import filter_spans
+import subprocess
+import sys
 
 '''
 EQUAL WEIGHTS, NOTHING DONE ABOUT ASSIGNING DIFFERENT WEIGHTS TO GOLDEN, SILVER, BRONZE DATASETS.
@@ -21,7 +23,8 @@ def load_pickle(datatype: str) -> pd.DataFrame:
     if datatype not in allowed_values:
         raise ValueError(f"{datatype} value not allowed. Allowed values: {allowed_values}")
     cwd = os.getcwd()
-    if cwd.endswith("RoBERTa"):
+    folder = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
+    if cwd.endswith(folder):
         cwd = os.path.dirname(cwd)
         cwd = os.path.dirname(cwd)
         path = os.path.join(cwd, "Data", f"{datatype}", f"{datatype}.pkl")
@@ -75,6 +78,27 @@ dev_data_doc = create_training(dev_data)
 train_data_doc.to_disk("train_data.spacy")
 dev_data_doc.to_disk("data_dev.spacy")
 
+
+def train_spacy_model(config_dir: str):
+    # fill config
+    subprocess.run(
+        [sys.executable, "-m", "spacy", "init", "fill-config", "base_config.cfg", "config.cfg"],
+        cwd = config_dir,
+        check = True
+    )
+    
+    # train
+    result = subprocess.run(
+        [sys.executable, "-m", "spacy", "train", "config.cfg", "--output", "./output"],
+        cwd = config_dir,
+        check = True
+    )
+    
+    #if result.returncode != 0:
+        #print(f"Training failed with exit code {result.returncode}")
+
+
+train_spacy_model(os.getcwd())
 
 '''
 Open your CLI and cd over into the directory of base_config.cfg
