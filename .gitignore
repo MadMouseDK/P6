@@ -10,3 +10,6 @@ venv/
 env/
 ENV/
 scibert_env
+Models/RoBERTa/roBERTa.py
+TEST_NOT_FOR_GITHUB/my-preprocessing.py
+TEST_NOT_FOR_GITHUB/train_data_initial.pkl
