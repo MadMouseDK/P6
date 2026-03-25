@@ -1,10 +1,7 @@
 import os
 import pandas as pd
 import warnings
-import spacy
 import re
-from spacy.tokens import DocBin
-from spacy.util import filter_spans
 from typing import Tuple
 from pandas import DataFrame
 import pickle
