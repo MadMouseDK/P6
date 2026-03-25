@@ -100,21 +100,6 @@ def train_spacy_model(config_dir: str):
 
 train_spacy_model(os.getcwd())
 
-'''
-Open your CLI and cd over into the directory of base_config.cfg
-Simply copy/paste this command: (might be that you don't need the exclamation mark in the bceginnings')
-    
-!python -m spacy init fill-config base_config.cfg config.cfg
-
-A config.cfg file will appear in your working directory.
-
-Next, run the following to begin training:
-    
-!python -m spacy train config.cfg --output ./output
-
-After training is complete, the resulting model will appear in a new folder called output.
-'''
-
 # MODEL RESULTS (for fun)
 
 '''
