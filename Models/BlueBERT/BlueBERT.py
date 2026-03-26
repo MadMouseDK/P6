@@ -2,7 +2,7 @@ from transformers import TrainingArguments, Trainer
 from datasets import Dataset, Features, Value, ClassLabel
 import numpy as np
 from seqeval.metrics import classification_report
-from transformers import BertTokenizerFast, BertForTokenClassification, ProgressCallback
+from transformers import BertTokenizerFast, BertForTokenClassification, ProgressCallback, TrainerCallback
 import pickle
 import spacy
 from transformers import DataCollatorForTokenClassification
@@ -243,11 +243,16 @@ trainer = Trainer(
     eval_dataset = tokenized_dev,
     data_collator = data_collator,
     compute_metrics = compute_metrics,
-    callbacks = [ ProgressCallback()]
+    callbacks = [ ProgressCallback()
+                 ]
 )
 
 # Start training
-trainer.train()  
+try:
+    trainer.train()
+except KeyboardInterrupt:
+    trainer.save_model("./bluebert-ner-best")
+    tokenizer.save_pretrained("./bluebert-ner-best")
 
 
 # saving the model
