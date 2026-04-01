@@ -1,8 +1,17 @@
+# Paths
 Data/**
 !Data/**/
 !Data/**/.gitkeep
+
+Models/**
+!Models/**/
+!Models/**/.gitkeep
+
+# Cache and jupyter checkpoints
 .ipynb_checkpoints
 __pycache__
+
+# Virtual enviroments
 venv
 .venv
 .venv/
@@ -11,3 +20,9 @@ env/
 ENV/
 scibert_env
 
+# Spyder prject settings
+.spyderproject
+.spyproject
+
+# Visual studio code
+.vscode
