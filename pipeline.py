@@ -10,19 +10,20 @@ from spacy.tokens import DocBin
 
 def pipeline():
     preprocessing("train")
-    preprocessing("dev")
+    #preprocessing("dev")
+    
     
     models = {
         "SciBERT1": "Models/SciBERT/output/model-best",   
         "SciBERT2": "Models/SciBERT/output/model-best"  
     }
     
-    
+
    
     for name, info in models.items():
         print(f"Running model: {name}")
         nlp = spacy.load(info)
-        doc_bin = DocBin().from_disk("data_dev.spacy")
+        doc_bin = DocBin().from_disk(os.path.join("Data", "dev","dev.spacy"))
         docs = list(doc_bin.get_docs(nlp.vocab))
         
         true, pred = metrics(nlp, docs)
@@ -35,5 +36,5 @@ def pipeline():
 
 
 if __name__ == "__main__":
-    print(pipeline())
+    pipeline()
     

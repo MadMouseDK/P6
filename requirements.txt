@@ -1,11 +1,16 @@
-ipykernel==7.2.0
-matplotlib==3.10.8
-sentencepiece==0.2.1
-spacy==3.8.11
+en_core_sci_scibert @ https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_scibert-0.5.4.tar.gz#sha256=be4afaa2710d63206fafa7864001acbfab1225800bbab577f32765435e29b7f2
+en_core_web_trf @ https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.8.0/en_core_web_trf-3.8.0-py3-none-any.whl#sha256=272a31e9d8530d1e075351d30a462d7e80e31da23574f1b274e200f3fff35bf5
+huggingface_hub==0.36.2
+numpy==1.26.4
+pandas==3.0.0
+scipy==1.17.0
+scispacy==0.6.2
+spacy==3.7.5
 spacy-alignments==0.9.2
 spacy-curated-transformers==0.3.1
 spacy-legacy==3.0.12
 spacy-loggers==1.0.5
-spacy-lookups-data==1.0.5
-spacy-transformers==1.1.9
-pandas==2.0.3
+spacy-transformers==1.3.9
+transformers==4.49.0
+
+
