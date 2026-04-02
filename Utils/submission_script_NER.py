@@ -23,8 +23,8 @@ def sub_scr(model: str):
     model_path = os.path.join(path, "Models", model, "output", "model-best")
     trained_model = spacy.load(model_path)
     result = {}
-    entities = []
     for article in test_set.iterrows():
+        entities = []
         print(f"Processing article {article[0]} out of {len(test_set)-1}")
         pmid = int(article[1]["pmid"])
         title = article[1]["title"]
