@@ -1,11 +1,11 @@
 import os
 import pandas as pd
 import warnings
-import spacy
 import re
-from spacy.tokens import DocBin
-from spacy.util import filter_spans
 from typing import Tuple
+from pandas import DataFrame
+import pickle
+from tqdm import tqdm
 
 
 def load_dataset(data: str, root_path: str) -> pd.DataFrame:
@@ -23,37 +23,33 @@ def load_dataset(data: str, root_path: str) -> pd.DataFrame:
         train_gold_df = pd.read_json(os.path.join(data_path, "gold_quality", "json_format", "train_gold.json"), orient="index")
         train_silver_df = pd.read_json(os.path.join(data_path, "silver_quality", "json_format", "train_silver.json"), orient="index")
         train_silver2025_df = pd.read_json(os.path.join(data_path, "silver_quality", "json_format", "train_silver_2025.json"), orient="index") 
-        #train_bronze_df = pd.read_json(os.path.join(data_path, "bronze_quality/json_format/train_bronze.json"), orient="index")
-        return pd.concat([train_gold_df, train_silver2025_df, train_silver_df], axis=0)
+        train_bronze_df = pd.read_json(os.path.join(data_path, "bronze_quality/json_format/train_bronze.json"), orient="index")
+        return pd.concat([train_gold_df, train_silver2025_df, train_silver_df, train_bronze_df], axis=0)
     
 
-def extracts_entities(df: pd.DataFrame) -> pd.DataFrame:
-    title_information = dict()
-    abstract_information = dict()
-    for index, row in df.iterrows():
-        if not isinstance(row["entities"], list):
-            continue
+def expand_entries(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    if column not in df.columns:
+        print(f"{column} is not a column in the provided dataframe")
+        raise IndexError()
+    df = df[[column]].explode(column=column).reset_index(names="pmid")
+    expanded_df = pd.json_normalize(df[column])
+    df = df.drop(columns=[column]).join(expanded_df)
+    return df
 
-        title_entites = []
-        abstract_entities = []
-        for entity in row["entities"]:
-            start_idx, end_idx, label = entity["start_idx"], entity["end_idx"], entity["label"]
-            text_span = entity["text_span"]
-            if entity["location"] == "title":
-                title_entites.append((start_idx, end_idx + 1, label, text_span))
-            else:
-                abstract_entities.append((start_idx, end_idx + 1, label, text_span))
-        
-        if len(title_entites) != 0:
-            title_information[index] = {"text": row["title"], "entities": title_entites}
-        
-        if len(abstract_entities) != 0:
-            abstract_information[index] = {"text": row["abstract"], "entities": abstract_entities}
+def extracts_articles(df: pd.DataFrame) -> pd.DataFrame:
+    df = df[["title", "abstract", "annotator"]]
+    df = df.reset_index(names = "pmid")
 
-    df_title = pd.DataFrame(title_information).T
-    df_abstract = pd.DataFrame(abstract_information).T
-    full_df = pd.concat([df_title, df_abstract])
-    return full_df
+    titles = df[["pmid", "title", "annotator"]]
+    titles["location"] = ["title"] * len(titles)
+    titles = titles.rename(columns={"title": "text"})
+
+    abstracts = df[["pmid", "abstract", "annotator"]]
+    abstracts["location"] = ["abstract"] * len(abstracts)
+    abstracts = abstracts.rename(columns={"abstract": "text"})
+    
+    articles_df = pd.concat([abstracts, titles])
+    return articles_df
 
 
 def clean_html_tags(text: str, replacement: str = "#")  -> str:
@@ -102,8 +98,9 @@ def change_index(text: str, text_span: str, start_idx: int, end_idx: int) -> Tup
             msg = f"text_span {text_span} does not capture the entire word: {text[start_idx:end_idx]}"
             warnings.warn(msg)
     
-    if end_idx < len(text):
-        if re.match(r"[^\d\w]", text[end_idx]) is None:
+    if end_idx < (len(text) - 1):
+        char = text[end_idx + 1]
+        if char.isdigit() or char.isalpha():
             end_idx += 1
             msg = f"text_span {text_span} does not capture the entire word: {text[start_idx:end_idx]}"
             warnings.warn(msg)
@@ -111,32 +108,53 @@ def change_index(text: str, text_span: str, start_idx: int, end_idx: int) -> Tup
     return (start_idx, end_idx)
 
 
-def preprocessing(datatype: str = "train"):
+def main(datatype: str):
     cwd = os.getcwd()
     if cwd.endswith("Utils"):
         cwd = os.path.dirname(cwd)
     
     df = load_dataset(datatype, cwd)
-    df = df[["metadata", "entities"]]
+    df = df[["metadata", "entities", "relations"]]
     metadata_df = pd.json_normalize(df["metadata"])
-    metadata_df = metadata_df.drop(["author", "journal", "year"], axis=1)
-    df = pd.merge(metadata_df, df["entities"], left_index=True, right_index=True)
-    df = extracts_entities(df).to_numpy()
-    model = spacy.blank("en")
-    db = DocBin()
-    num_warnings = 0
+    metadata_df = metadata_df.drop(["author", "journal", "year"], axis = 1)
+    df = pd.merge(metadata_df, df[["entities", "relations"]], left_index = True, right_index = True)
 
-    for i, (text, annotations) in enumerate(df):
-        text = clean_html_tags(text)
-        doc = model(text)
-        entities = []
+    entities_df = expand_entries(df, "entities")
+    relations_df = df[df["relations"].astype(bool)]
+    relations_df = expand_entries(relations_df, "relations")
+    annotations_df = extracts_articles(df)
 
-        for start, end, label, text_span in annotations:
-            if not valid_text_span(text_span):
-                msg = f"Text span {text_span} is not valid for index {i}"
-                warnings.warn(msg)
-                continue
-        
+    results = preprocessing(annotations_df, entities_df, relations_df)
+
+    path = os.path.join(cwd, "Data", f"{datatype}", f"{datatype}.pkl")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as f:
+        pickle.dump(results, f)
+
+def preprocessing(annotations_df: pd.DataFrame, entities_df: pd.DataFrame, relations_df: pd.DataFrame) -> list:
+    results = []
+    for idx, annotation in tqdm(annotations_df.iterrows(), desc="Preprocessing the results"):
+        pmid = annotation.pmid
+        location = annotation.location
+        text = annotation.text
+
+        entry = (
+            text,
+            {"pmid": pmid,
+            "location": location,
+            "annotatpor": annotation.annotator,
+            "entities": [],
+            "text_span": [],
+            "relations": []}
+        )
+
+        entities = entities_df[(entities_df["pmid"] == pmid) & (entities_df["location"] == location)]
+        relations = relations_df[(relations_df["pmid"] == pmid) & (relations_df["subject_location"] == location)]
+        cleaned_text = clean_html_tags(text)
+        for _, entity in entities.iterrows():
+            text_span = entity.text_span
+            start = entity.start_idx
+            end = entity.end_idx
             while True:
                 new_start_idx, new_end_idx = change_index(text, text_span, start, end)
                 if new_start_idx == start and new_end_idx == end:
@@ -148,24 +166,38 @@ def preprocessing(datatype: str = "train"):
                 if text_span.startswith("Background"):
                     text_span = text[start+10:end]
                     break
-            
-            span = doc.char_span(start, end, label=label, alignment_mode="contract")
-            if span is None:
-                msg = f"Skipping [{start}, {end}, {label}] since it does match {doc.text[start:end]} should be {text_span} at index {i}"
-                warnings.warn(msg)
-                num_warnings += 1
+
+            if not valid_text_span(text_span):
+                print(f"Not valid {text_span}")
+                if not relations.empty:
+                    relations.where(relations["subject_start_idx"] == start, -1)
+                    relations.where(relations["object_start_idx"] == start, -1)
                 continue
-            entities.append(span)
-        entities = filter_spans(entities)
-        doc.set_ents(entities)
-        db.add(doc)
+            
+            if not relations.empty:
+                relations.where(relations["subject_start_idx"] == start, start)
+                relations.where(relations["object_start_idx"] == start, start)
+
+            entry[1]["entities"].append((start, end, entity.label))
+            entry[1]["text_span"].append(text_span)
+
+
+        for _, relation in relations.iterrows():
+            subject_start = relation.subject_start_idx
+            object_start = relation.object_start_idx
+            predicate = relation.predicate
+
+            if subject_start != -1 or object_start != -1:
+                continue
+
+            entry[1]["relations"].append((subject_start, predicate, object_start))    
+        results.append(entry)
     
-    path = os.path.join(os.getcwd(), "Data", f"{datatype}", f"{datatype}.spacy")
-    db.to_disk(path)
-    print(num_warnings)
+    return results
+
 
 if __name__ == "__main__":
-    preprocessing()
+    main("train")
+    main("dev")
     
 
-    
