@@ -249,73 +249,73 @@ def main(datatype: str):
     with open(path, "wb") as f:
         pickle.dump(corrected_df, f)
 
-def preprocessing():
+def preprocessing(annotations_df):
     
     results = []
 
-for idx, annotation in df_test.iterrows():
-    pmid = annotation.pmid
-    location = annotation.location
-    text = annotation.text
+    for idx, annotation in annotations_df.iterrows():
+        pmid = annotation.pmid
+        location = annotation.location
+        text = annotation.text
 
-    entry = (
-        text,
-        {"pmid": pmid,
-         "location": location,
-         "annotatpor": annotation.annotator,
-         "entities": [],
-         "text_span": [],
-         "relations": []}
-    )
+        entry = (
+            text,
+            {"pmid": pmid,
+            "location": location,
+            "annotatpor": annotation.annotator,
+            "entities": [],
+            "text_span": [],
+            "relations": []}
+        )
 
-    entities = entities_df[(entities_df["pmid"] == pmid) & (entities_df["location"] == location)]
-    relations = relations_df[(relations_df["pmid"] == pmid) & (relations_df["subject_location"] == location)]
-    cleaned_text = clean_html_tags(text)
-    for _, entity in entities.iterrows():
-        text_span = entity.text_span
-        start = entity.start_idx
-        end = entity.end_idx
-        if not relations.empty:
-            subject_entity = relations[relations["subject_start_idx"] == start]
-            object_entity = relations[relations["object_start_idx"] == start]
-
-        while True:
-            new_start_idx, new_end_idx = change_index(text, text_span, start, end)
-            if new_start_idx == start and new_end_idx == end:
-                break
-            start = new_start_idx
-            end = new_end_idx
-            text_span = text[start:end]
-
-            if text_span.startswith("Background"):
-                text_span = text[start+10:end]
-                break
-
-        if not valid_text_span(text_span):
-            print(f"Not valid {text_span}")
+        entities = entities_df[(entities_df["pmid"] == pmid) & (entities_df["location"] == location)]
+        relations = relations_df[(relations_df["pmid"] == pmid) & (relations_df["subject_location"] == location)]
+        cleaned_text = clean_html_tags(text)
+        for _, entity in entities.iterrows():
+            text_span = entity.text_span
+            start = entity.start_idx
+            end = entity.end_idx
             if not relations.empty:
-                relations.where(relations["subject_start_idx"] == start, -1)
-                relations.where(relations["object_start_idx"] == start, -1)
-            continue
-        
-        if not relations.empty:
-            relations.where(relations["subject_start_idx"] == start, start)
-            relations.where(relations["object_start_idx"] == start, start)
+                subject_entity = relations[relations["subject_start_idx"] == start]
+                object_entity = relations[relations["object_start_idx"] == start]
 
-        entry[1]["entities"].append((start, end, entity.label))
-        entry[1]["text_span"].append(text_span)
+            while True:
+                new_start_idx, new_end_idx = change_index(text, text_span, start, end)
+                if new_start_idx == start and new_end_idx == end:
+                    break
+                start = new_start_idx
+                end = new_end_idx
+                text_span = text[start:end]
+
+                if text_span.startswith("Background"):
+                    text_span = text[start+10:end]
+                    break
+
+            if not valid_text_span(text_span):
+                print(f"Not valid {text_span}")
+                if not relations.empty:
+                    relations.where(relations["subject_start_idx"] == start, -1)
+                    relations.where(relations["object_start_idx"] == start, -1)
+                continue
+            
+            if not relations.empty:
+                relations.where(relations["subject_start_idx"] == start, start)
+                relations.where(relations["object_start_idx"] == start, start)
+
+            entry[1]["entities"].append((start, end, entity.label))
+            entry[1]["text_span"].append(text_span)
 
 
-    for _, relation in relations.iterrows():
-        subject_start = relation.subject_start_idx
-        object_start = relation.object_start_idx
-        predicate = relation.predicate
+        for _, relation in relations.iterrows():
+            subject_start = relation.subject_start_idx
+            object_start = relation.object_start_idx
+            predicate = relation.predicate
 
-        if subject_start != -1 or object_start != -1:
-            continue
+            if subject_start != -1 or object_start != -1:
+                continue
 
-        entry[1]["relations"].append((subject_start, predicate, object_start))    
-    results.append(entry)
+            entry[1]["relations"].append((subject_start, predicate, object_start))    
+        results.append(entry)
 
 
 if __name__ == "__main__":
