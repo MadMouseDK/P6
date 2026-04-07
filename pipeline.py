@@ -1,21 +1,22 @@
 from Models.SciBERT import *
 from Models.RoBERTa import *
-from Utils.preprocessing import preprocessing
+from Utils.preprocessing import main as preprocessing
 from Utils.evaluation_metrics import *
 import os
+import spacy
 from spacy.tokens import DocBin
-
 
 #Pipeline skeleton
 
 def pipeline():
-    preprocessing("train")
+    #preprocessing("train") #Not working, require spacy file to work
     #preprocessing("dev")
+
     
     
     models = {
         "SciBERT1": "Models/SciBERT/output/model-best",   
-        "SciBERT2": "Models/SciBERT/output/model-best"  
+        #"SciBERT2": "Models/SciBERT/output/model-best"  
     }
     
 
@@ -27,10 +28,13 @@ def pipeline():
         docs = list(doc_bin.get_docs(nlp.vocab))
         
         true, pred = metrics(nlp, docs)
-        results = calculate_metrics(true, pred)
-        print(f"     |  precision |     recall   |   f1                 ")
+        results = calculate_metrics(true, pred, iou_threshold=0.5)
+
+        print(f"PARTIAL MATCH METRICS for model {name}")
+        print(f"     |  Precision |     Recall   |   F1                 ")
         print(f"Macro| {results['macro']}")
         print(f"Micro| {results['micro']}")
+
     return 
 
 
