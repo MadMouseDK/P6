@@ -37,7 +37,7 @@ dev_data = load_pickle("dev")
 
 
 # create a blank model
-nlp = spacy.load('en')
+nlp = spacy.blank('en')
 
 def create_training(data):
     
