@@ -49,7 +49,8 @@ If you don't have scispacy and sciBERT installed:
 '''
 
 # create a blank model
-nlp = spacy.load('en_core_sci_scibert')
+nlp = spacy.blank('en')
+
 
 def create_spacy_docbin(data):
     
