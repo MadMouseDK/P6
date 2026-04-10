@@ -5,7 +5,6 @@ import re
 from typing import Tuple
 from pandas import DataFrame
 import pickle
-from tqdm import tqdm
 
 
 def load_dataset(data: str, root_path: str) -> pd.DataFrame:
@@ -108,6 +107,115 @@ def change_index(text: str, text_span: str, start_idx: int, end_idx: int) -> Tup
     return (start_idx, end_idx)
 
 
+def clean_entity(row: pd.Series):
+    """Changes the index for word if it does not capture the entire word and validates the word.
+
+    If the word is not valid then the start_idx and end_idx will be set to -1, while text_span will become ""
+
+    Returns the updated indexes and text_span
+    """
+    start = row.start_idx
+    end = row.end_idx
+    text_span = row.text_span
+    text = row.text
+    while True:
+        new_start_idx, new_end_idx = change_index(text, text_span, start, end)
+        if new_start_idx == start and new_end_idx == end:
+            break
+        start = new_start_idx
+        end = new_end_idx
+        text_span = text[start:end]
+
+        if text_span.startswith("Background"):
+            text_span = text[start+10:end]
+            break
+    
+    if not valid_text_span(text_span):
+        start = -1
+        end = -1
+        text_span = ""
+    
+    return start, end, text_span
+
+
+def preprocessing(annotations_df: pd.DataFrame, entities_df: pd.DataFrame, relations_df: pd.DataFrame) -> list:
+    """Takes the dataframes and cleans the data before storing it in a list"""
+    entities_df = entities_df.reset_index(names="id")
+    merged_df = pd.merge(
+        relations_df,
+        entities_df,
+        left_on=["pmid", "subject_location", "subject_start_idx", "subject_end_idx"],
+        right_on=["pmid", "location", "start_idx", "end_idx"]
+    )
+    relations_df["subject_id"] = merged_df["id"]
+
+    merged_df = pd.merge(
+        relations_df,
+        entities_df,
+        left_on=["pmid", "object_location", "object_start_idx", "object_end_idx"],
+        right_on=["pmid", "location", "start_idx", "end_idx"]
+    )
+    relations_df["object_id"] = merged_df["id"]
+    relations_df = relations_df.drop(columns=["subject_start_idx", "subject_end_idx", "subject_location", "object_start_idx", "object_end_idx"])
+
+    entities_cleaned = pd.merge(entities_df, annotations_df, on=["pmid", "location"])
+    entities_cleaned[["start_idx", "end_idx", "text_span"]] = entities_cleaned.apply(clean_entity, axis=1, result_type="expand")
+    entities_cleaned = entities_cleaned.drop(columns=["text", "annotator"])
+
+
+    entities = entities_cleaned[entities_cleaned["start_idx"] != -1]
+    entities["entities"] = entities[["start_idx", "end_idx", "label", "uri"]].values.tolist()
+
+    entities_grouped = entities.groupby(["pmid", "location"]).agg({
+        "entities": list,
+        "text_span": list
+    }).reset_index()
+
+    relations_df = pd.merge(
+        relations_df,
+        entities[["id", "start_idx", "end_idx"]],
+        left_on="subject_id",
+        right_on="id"
+    )
+    relations_df = relations_df.rename(columns={"start_idx" : "subject_start_idx", "end_idx": "subject_end_idx"})
+
+    relations_df = pd.merge(
+        relations_df, 
+        entities[["id", "start_idx", "end_idx"]], 
+        left_on="object_id", 
+        right_on="id"
+    )
+    relations_df = relations_df.rename(columns={
+        "start_idx" : "object_start_idx",
+        "object_idx": "object_end_idx"}
+    )
+
+    relations_df = relations_df[(relations_df["subject_start_idx"] != -1) & (relations_df["object_start_idx"] != -1)]
+    relations_df["relations"] = relations_df[["subject_start_idx", "subject_uri", "predicate", "object_start_idx", "object_uri"]].values.tolist()
+    relations_grouped = relations_df.groupby(["pmid", "object_location"]).agg({
+        "relations": list
+    }).reset_index()
+
+    cleaned_data = pd.merge(annotations_df, entities_grouped, on=["pmid", "location"])
+    cleaned_data = pd.merge(cleaned_data, relations_grouped, left_on=["pmid", "location"], right_on=["pmid", "object_location"])
+
+    results = []
+    for _, row in cleaned_data.iterrows():
+        entry = (
+            row.text,
+            {
+                "entities": row.entities,
+                "text_span": row.text_span,
+                "relations": row.relations,
+                "location": row.location,
+                "pmid": row.pmid
+            }
+        )
+        results.append(entry)
+    
+    return results
+
+
 def main(datatype: str):
     cwd = os.getcwd()
     if cwd.endswith("Utils"):
@@ -130,71 +238,6 @@ def main(datatype: str):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as f:
         pickle.dump(results, f)
-
-def preprocessing(annotations_df: pd.DataFrame, entities_df: pd.DataFrame, relations_df: pd.DataFrame) -> list:
-    results = []
-    for idx, annotation in tqdm(annotations_df.iterrows(), desc="Preprocessing the results"):
-        pmid = annotation.pmid
-        location = annotation.location
-        text = annotation.text
-
-        entry = (
-            text,
-            {"pmid": pmid,
-            "location": location,
-            "annotatpor": annotation.annotator,
-            "entities": [],
-            "text_span": [],
-            "relations": []}
-        )
-
-        entities = entities_df[(entities_df["pmid"] == pmid) & (entities_df["location"] == location)]
-        relations = relations_df[(relations_df["pmid"] == pmid) & (relations_df["subject_location"] == location)]
-        cleaned_text = clean_html_tags(text)
-        for _, entity in entities.iterrows():
-            text_span = entity.text_span
-            start = entity.start_idx
-            end = entity.end_idx
-            while True:
-                new_start_idx, new_end_idx = change_index(text, text_span, start, end)
-                if new_start_idx == start and new_end_idx == end:
-                    break
-                start = new_start_idx
-                end = new_end_idx
-                text_span = text[start:end]
-
-                if text_span.startswith("Background"):
-                    text_span = text[start+10:end]
-                    break
-
-            if not valid_text_span(text_span):
-                print(f"Not valid {text_span}")
-                if not relations.empty:
-                    relations.where(relations["subject_start_idx"] == start, -1)
-                    relations.where(relations["object_start_idx"] == start, -1)
-                continue
-            
-            if not relations.empty:
-                relations.where(relations["subject_start_idx"] == start, start)
-                relations.where(relations["object_start_idx"] == start, start)
-
-            entry[1]["entities"].append((start, end, entity.label))
-            entry[1]["text_span"].append(text_span)
-
-
-        for _, relation in relations.iterrows():
-            subject_start = relation.subject_start_idx
-            object_start = relation.object_start_idx
-            predicate = relation.predicate
-
-            if subject_start != -1 or object_start != -1:
-                continue
-
-            entry[1]["relations"].append((subject_start, predicate, object_start))    
-        results.append(entry)
-    
-    return results
-
 
 if __name__ == "__main__":
     main("train")
