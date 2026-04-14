@@ -247,4 +247,3 @@ with open("kb_synonyms_labels.pickle", "wb") as f:
     pickle.dump(synoynms_labls, f)
 
 
-

@@ -1,12 +1,3 @@
-import os
-import pandas as pd
-import numpy as np
-import warnings
-import spacy
-import re
-from spacy.tokens import DocBin
-from spacy.training import Example
-from typing import Tuple, Iterator
 
 
 def extract_entities(doc):
@@ -139,4 +130,3 @@ def calculate_metrics(all_y_true_flat, all_y_pred_flat, iou_threshold=0.5):
         "macro": (macro_p, macro_r, macro_f1),
         "micro": (micro_p, micro_r, micro_f1)
     }
-

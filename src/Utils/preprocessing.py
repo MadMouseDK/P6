@@ -3,7 +3,6 @@ import pandas as pd
 import warnings
 import re
 from typing import Tuple
-from pandas import DataFrame
 import pickle
 
 
@@ -13,7 +12,7 @@ def load_dataset(data: str, root_path: str) -> pd.DataFrame:
     if data not in allowed_values:
         raise ValueError(f"{data} value not allowed. Allowed values: {allowed_values}")
 
-    data_path = os.path.join(root_path, "Data", "raw", "GutBrainIE_Full_Collection_2026", "Annotations")
+    data_path = os.path.join(root_path, "Data", "raw", "Annotations")
     if data == "dev":
         data_path = os.path.join(data_path, "Dev", "json_format", "dev.json")
         return pd.read_json(data_path, orient="index")
@@ -220,6 +219,7 @@ def main(datatype: str):
     cwd = os.getcwd()
     if cwd.endswith("Utils"):
         cwd = os.path.dirname(cwd)
+        cwd = os.path.dirname(cwd)
     
     df = load_dataset(datatype, cwd)
     df = df[["metadata", "entities", "relations"]]
@@ -234,7 +234,7 @@ def main(datatype: str):
 
     results = preprocessing(annotations_df, entities_df, relations_df)
 
-    path = os.path.join(cwd, "Data", f"{datatype}", f"{datatype}.pkl")
+    path = os.path.join(cwd, "Data", "processed", f"{datatype}.pkl")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as f:
         pickle.dump(results, f)
@@ -243,4 +243,3 @@ if __name__ == "__main__":
     main("train")
     main("dev")
     
-
