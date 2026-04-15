@@ -1,7 +1,5 @@
-from Models.SciBERT import *
-from Models.RoBERTa import *
-from Utils.preprocessing import main as preprocessing
-from Utils.evaluation_metrics import *
+from src.Utils.preprocessing import main as preprocessing
+from src.Utils.evaluation_metrics import *
 import os
 import spacy
 from spacy.tokens import DocBin
@@ -15,8 +13,12 @@ def pipeline():
     
     
     models = {
-        "SciBERT1": "Models/SciBERT/output/model-best",   
-        #"SciBERT2": "Models/SciBERT/output/model-best"  
+        "SciBERT": "Models/SciBERT_NER/output/model-best",
+        "RoBERTa": "Models/RoBERTa_NER/output/model-best",
+        "BlueBERT_pubmed": "Models/BlueBERT-pubmed-L12_NER/output/model-best",
+        "BLueBERT_mimic": "Models/BlueBERT-pubmed-mimic-L12_NER/output/model-best",
+        "BioBERT-base": "Models/BioBERT-base_NER/output/model-best"
+ 
     }
     
 
@@ -24,7 +26,7 @@ def pipeline():
     for name, info in models.items():
         print(f"Running model: {name}")
         nlp = spacy.load(info)
-        doc_bin = DocBin().from_disk(os.path.join("Data", "dev","dev.spacy"))
+        doc_bin = DocBin().from_disk(os.path.join("Data", "dev","dev_data_NER.spacy"))
         docs = list(doc_bin.get_docs(nlp.vocab))
         
         true, pred = metrics(nlp, docs)
