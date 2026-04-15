@@ -7,10 +7,6 @@ Models/**
 !Models/**/
 !Models/**/.gitkeep
 
-Output/**
-!Output/**/
-!Output/**/.gitkeep
-
 # Cache and jupyter checkpoints
 .ipynb_checkpoints
 __pycache__
