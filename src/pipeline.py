@@ -1,5 +1,5 @@
-from src.Utils.preprocessing import main as preprocessing
-from src.Utils.evaluation_metrics import *
+from Utils.preprocessing import main as preprocessing
+from Utils.evaluation_metrics import *
 import os
 import spacy
 from spacy.tokens import DocBin
@@ -9,15 +9,21 @@ from spacy.tokens import DocBin
 def pipeline():
     #preprocessing("train") #Not working, require spacy file to work
     #preprocessing("dev")
+    
+    
+    path = os.getcwd()
+    if path.endswith("src"):
+        path = os.path.dirname(path)
+
 
     
-    
     models = {
-        "SciBERT": "Models/SciBERT_NER/output/model-best",
-        "RoBERTa": "Models/RoBERTa_NER/output/model-best",
-        "BlueBERT_pubmed": "Models/BlueBERT-pubmed-L12_NER/output/model-best",
-        "BLueBERT_mimic": "Models/BlueBERT-pubmed-mimic-L12_NER/output/model-best",
-        "BioBERT-base": "Models/BioBERT-base_NER/output/model-best"
+        "SciBERT": os.path.join(path, "Models", "SciBERT_NER", "output", "model-best"),
+        "SciBERT-cased": os.path.join(path, "Models", "SciBERT-cased_NER", "output", "model-best"),
+        "RoBERTa": os.path.join(path, "Models", "RoBERTa_NER", "output", "model-best"),
+        "BlueBERT-pubmed": os.path.join(path, "Models", "BlueBERT-pubmed_NER", "output", "model-best"),
+        "BLueBERT-mimic": os.path.join(path, "Models", "BlueBERT-mimic_NER", "output", "model-best"),
+        "BioBERT-base": os.path.join(path, "Models", "BioBERT-base_NER", "output", "model-best")
  
     }
     
@@ -26,7 +32,7 @@ def pipeline():
     for name, info in models.items():
         print(f"Running model: {name}")
         nlp = spacy.load(info)
-        doc_bin = DocBin().from_disk(os.path.join("Data", "dev","dev_data_NER.spacy"))
+        doc_bin = DocBin().from_disk(os.path.join(path, "Data", "processed","dev_data_NER.spacy"))
         docs = list(doc_bin.get_docs(nlp.vocab))
         
         true, pred = metrics(nlp, docs)
