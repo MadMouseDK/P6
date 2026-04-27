@@ -9,11 +9,10 @@ def sub_scr(model: str):
     if path.endswith("Utils"):
         path = os.path.dirname(path)
         path = os.path.dirname(path)
-    # I just loaded articles from golden set for now 
-    data_path = os.path.join(path, "Data", "raw", "Articles", "csv_format", "articles_train_gold.csv")
+    data_path = os.path.join(path, "Data", "raw", "Articles", "csv_format", "articles_dev.csv")
     test_set = pd.read_csv(data_path, sep = '|')
     test_set = test_set[["pmid","title", "abstract"]]
-    test_set = test_set[:10] # choosing 10 just for now
+    #test_set = test_set[:10] # choosing 10 just for now
     allowed_values = ["RoBERTa",
                       "SciBERT",
                       "BioBERT-base",
