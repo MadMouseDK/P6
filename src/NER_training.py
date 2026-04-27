@@ -38,9 +38,9 @@ def load_pickle(datatype: str) -> list:
     folder = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
     if cwd.endswith(folder):
         cwd = os.path.dirname(cwd)
-        path = os.path.join(cwd, "Data", "processed", f"{datatype}.pkl")
-        with open(path, "rb") as f:
-            return pickle.load(f)
+    path = os.path.join(cwd, "Data", "processed", f"{datatype}.pkl")
+    with open(path, "rb") as f:
+        return pickle.load(f)
     return None
 
 
@@ -121,7 +121,7 @@ def save_spacy(data_spacy: DocBin, name: str) -> None:
     folder = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
     if cwd.endswith(folder):
         cwd = os.path.dirname(cwd)
-        path = os.path.join(cwd, "Data", "processed", f"{name}_data_NER.spacy")
+    path = os.path.join(cwd, "Data", "processed", f"{name}_data_NER.spacy")
     data_spacy.to_disk(path)
 
 
@@ -174,9 +174,13 @@ def train_spacy_model(model_name: str):
         print(f"Training failed with exit code {result.returncode}")
 
 
+
+"""
 train_spacy_model("RoBERTa")
 train_spacy_model("SciBERT")
 train_spacy_model("BlueBERT-pubmed_NER")
 train_spacy_model("BlueBERT-pubmed-mimic_NER")
 train_spacy_model("BioBERT-base_NER")
 train_spacy_model("BioBERT-large_NER")
+"""
+

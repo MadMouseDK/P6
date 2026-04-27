@@ -2,7 +2,6 @@ import os
 import warnings
 import re
 import pickle
-
 import pandas as pd
 
 
@@ -73,7 +72,7 @@ def valid_text_span(text_span: str) -> bool:
         return False
 
     ends_with = r"(system|systems|axis|model|models|response|mechanism|theraphy|symptoms|pathogenesis|destruction)\b$"
-    return re.match(ends_with, text_span) is not None
+    return re.match(ends_with, text_span) is None
 
 
 def change_index(text: str, text_span: str, start_idx: int, end_idx: int) -> tuple[int, int]:
