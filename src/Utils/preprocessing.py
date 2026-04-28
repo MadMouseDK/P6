@@ -5,8 +5,8 @@ import pickle
 import pandas as pd
 
 
-def load_dataset(data: str, root_path: str) -> pd.DataFrame:
-    """Loads the dataset a"""
+def load_dataset(data: str, root_path: str) -> pd.DataFrame | None:
+    """Loads the dataset and returns a pandas dataframe if succesful otherwise return None"""
     allowed_values = ["train", "dev"]
     if data not in allowed_values:
         raise ValueError(f"{data} value not allowed. Allowed values: {allowed_values}")
@@ -134,8 +134,33 @@ def clean_entity(row: pd.Series):
     return start, end, text_span
 
 
-def preprocessing(annotations_df: pd.DataFrame, entities_df: pd.DataFrame, relations_df: pd.DataFrame) -> list:
+def sample_data(df: pd.DataFrame, fractions: dict) -> pd.DataFrame:
+    gold_df = df[df["annotator"] == "gold"]
+    silverA_df = df[df["annotator"] == "silver_a"]
+    silverB_df = df[df["annotator"] == "silver_b"]
+    bronze_df = df[df["annotator"] == "bronze"]
+
+    gold_df = gold_df.sample(frac=fractions["gold"], replace=True)
+    silverA_df = silverA_df.sample(frac=fractions["silverA"], replace=True)
+    silveB_df = silverB_df.sample(frac=fractions["silverB"], replace=True)
+    bronze_df = bronze_df.sample(frac=fractions["bronze"], replace=True)
+
+    return pd.concat([gold_df,
+                      silverA_df,
+                      silverB_df,
+                      bronze_df])
+
+
+def preprocessing(annotations_df: pd.DataFrame,
+                  entities_df: pd.DataFrame,
+                  relations_df: pd.DataFrame,
+                  use_sampling: bool = False,
+                  fractions: dict | None = None
+                )-> list:
     """Takes the dataframes and cleans the data before storing it in a list"""
+    if use_sampling:
+        assert isinstance(fractions, dict), "Need to asign fraction if sampling is true"
+
     entities_df = entities_df.reset_index(names="id")
     relations_df = relations_df.merge(
         entities_df,
@@ -191,6 +216,8 @@ def preprocessing(annotations_df: pd.DataFrame, entities_df: pd.DataFrame, relat
     cleaned_data = annotations_df.merge(entities_grouped, on=["pmid", "location"])
     cleaned_data = cleaned_data.merge(relations_grouped, left_on=["pmid", "location"], right_on=["pmid", "object_location"])
 
+    if use_sampling:
+        cleaned_data = sample_data(cleaned_data, fractions)
     results = []
     for _, row in cleaned_data.iterrows():
         entry = (
