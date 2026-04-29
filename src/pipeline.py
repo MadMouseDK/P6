@@ -44,6 +44,7 @@ def pipeline():
         "SciBERT": os.path.join(path, "Models", "SciBERT_NER", "output", "model-best"),
         "SciBERT-cased": os.path.join(path, "Models", "SciBERT-cased_NER", "output", "model-best"),
         "RoBERTa": os.path.join(path, "Models", "RoBERTa_NER", "output", "model-best"),
+        "RoBERTa-biomed": os.path.join(path, "Models", "RoBERTa-biomed_NER", "output", "model-best"),
         "BlueBERT-pubmed": os.path.join(path, "Models", "BlueBERT-pubmed_NER", "output", "model-best"),
         "BLueBERT-mimic": os.path.join(path, "Models", "BlueBERT-mimic_NER", "output", "model-best"),
         "BioBERT-base": os.path.join(path, "Models", "BioBERT-base_NER", "output", "model-best")
