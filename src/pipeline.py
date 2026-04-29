@@ -7,14 +7,12 @@ from spacy.tokens import DocBin
 #Pipeline skeleton
 
 def pipeline():
-    #preprocessing("train") #Not working, require spacy file to work
-    #preprocessing("dev")
-    
+    preprocessing("train")
+    preprocessing("dev")
     
     path = os.getcwd()
     if path.endswith("src"):
         path = os.path.dirname(path)
-
 
     
     models = {
@@ -24,7 +22,6 @@ def pipeline():
         "BlueBERT-pubmed": os.path.join(path, "Models", "BlueBERT-pubmed_NER", "output", "model-best"),
         "BLueBERT-mimic": os.path.join(path, "Models", "BlueBERT-mimic_NER", "output", "model-best"),
         "BioBERT-base": os.path.join(path, "Models", "BioBERT-base_NER", "output", "model-best")
- 
     }
     
 
@@ -39,9 +36,11 @@ def pipeline():
         results = calculate_metrics(true, pred, iou_threshold=0.5)
 
         print(f"PARTIAL MATCH METRICS for model {name}")
-        print(f"     |  Precision |     Recall   |   F1                 ")
-        print(f"Macro| {results['macro']}")
-        print(f"Micro| {results['micro']}")
+        print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6}")
+        print(f"Macro| {results['macro'][0]:>9.4} | {results['macro'][1]:>6.4} | {results['macro'][2]:>6.4}")
+        print(f"Micro| {results['micro'][0]:>9.4} | {results['micro'][1]:>6.4} | {results['micro'][2]:>6.4}")
+        #print(f"class| {results['class_f1']}") #Can be changed to class_precision, class_recall or class_f1
+  
 
     return 
 
