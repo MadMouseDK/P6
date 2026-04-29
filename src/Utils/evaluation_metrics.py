@@ -29,10 +29,6 @@ class EntityMetrics:
             return 0.0
         return 2 * (p * r) / (p + r)
     
-    @property
-    def support(self) -> int: # TP + FN
-        return self.tp + self.fn
-
 
 def extract_entities(doc) -> Set[Tuple[int, int, str]]:
     return {(ent.start_char, ent.end_char, ent.label_) for ent in doc.ents}
@@ -51,7 +47,7 @@ def calculate_metrics(nlp, docs: List) -> Dict:
         for start, end, label in dev_entities: 
             all_classes.add(label)
             
-        for _, _, label in pred_entities: # Will add new classes if the model predicts something not in the gold data
+        for start, end, label in pred_entities: # Will add new classes if the model predicts something not in the gold data
             all_classes.add(label)
         
                 
