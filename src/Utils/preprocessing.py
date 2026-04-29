@@ -290,9 +290,10 @@ def results_to_spacy(results: list) -> DocBin:
 
 def main(datatype: str):
     cwd = os.getcwd()
-    cwd = os.path.dirname(cwd)
     if cwd.endswith("Utils"):
         cwd = os.path.dirname(cwd)
+        cwd = os.path.dirname(cwd)
+    else:
         cwd = os.path.dirname(cwd)
 
     df = load_dataset(datatype, cwd)
