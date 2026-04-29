@@ -45,8 +45,8 @@ def calculate_iou(ent1, ent2): #Intersection over Union for same label only!
 
 
 def calculate_metrics(all_y_true_flat, all_y_pred_flat, iou_threshold=0.5):
-    # Get all unique classes
-    classes = list(set(label for _, _, label in all_y_true_flat + all_y_pred_flat))
+    # Get all unique classes. Sorted to reduce RNG
+    classes = sorted(list(set(label for _, _, label in all_y_true_flat + all_y_pred_flat)))
     
     if not classes:
         return {
@@ -57,8 +57,8 @@ def calculate_metrics(all_y_true_flat, all_y_pred_flat, iou_threshold=0.5):
             "micro": (0, 0, 0)
         }
     
-    true_entities = set(all_y_true_flat)
-    pred_entities = set(all_y_pred_flat)
+    true_entities = sorted(list(set(all_y_true_flat)))
+    pred_entities = sorted(list(set(all_y_pred_flat)))
     
 
     matched_pred = set()
