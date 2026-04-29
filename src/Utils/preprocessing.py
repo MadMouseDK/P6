@@ -3,6 +3,8 @@ import warnings
 import re
 import pickle
 import pandas as pd
+from spacy.tokens import DocBin
+import spacy
 
 
 def load_dataset(data: str, root_path: str) -> pd.DataFrame | None:
@@ -234,6 +236,57 @@ def preprocessing(annotations_df: pd.DataFrame,
 
     return results
 
+def results_to_spacy(results: list) -> DocBin:
+    nlp = spacy.blank("en")
+    doc_bin = DocBin()
+    
+    for text, metadata in results:
+        doc = nlp.make_doc(text)
+        
+        if metadata.get("entities"):
+            ents = []
+            for start, end, label, uri in metadata["entities"]:
+                # Check if the span is correct - if not, try adjusting.
+                # Had problem preserving spans when converting to spacy.
+                current_span = text[start:end]
+                
+                span = doc.char_span(start, end, label=label)
+                
+                if span is None and end < len(text):
+                    span = doc.char_span(start, end + 1, label=label)
+                
+                if span is None and start > 0 and end < len(text):
+                    span = doc.char_span(start - 1, end + 1, label=label)
+                
+                if span is not None:
+                    ents.append(span)
+            
+            if ents:
+                ents = sorted(ents, key=lambda x: (x.start_char, x.end_char))
+                
+                filtered_ents = []
+                for ent in ents:
+                    overlap = False
+                    for added_ent in filtered_ents:
+                        if not (ent.end_char <= added_ent.start_char or ent.start_char >= added_ent.end_char):
+                            overlap = True
+                            break
+                    if not overlap:
+                        filtered_ents.append(ent)
+                
+                if filtered_ents:
+                    try:
+                        doc.ents = filtered_ents
+                    except Exception as e:
+                        print(f"Warning: Could not set entities: {e}")
+        
+        if not doc.has_extension("custom_metadata"):
+            spacy.tokens.Doc.set_extension("custom_metadata", default=None)
+        doc._.custom_metadata = metadata
+        
+        doc_bin.add(doc)
+    
+    return doc_bin
 
 def main(datatype: str):
     cwd = os.getcwd()
@@ -259,11 +312,15 @@ def main(datatype: str):
     annotations_df = extracts_articles(df)
 
     results = preprocessing(annotations_df, entities_df, relations_df)
-
+    
     path = os.path.join(cwd, "Data", "processed", f"{datatype}.pkl")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as f:
         pickle.dump(results, f)
+
+    spacy_path = os.path.join(cwd, "Data", "processed", f"{datatype}_data_NER.spacy")
+    doc_bin = results_to_spacy(results)
+    doc_bin.to_disk(spacy_path)
 
 if __name__ == "__main__":
     main("train")
