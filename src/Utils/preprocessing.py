@@ -293,8 +293,7 @@ def main(datatype: str):
     if cwd.endswith("Utils"):
         cwd = os.path.dirname(cwd)
         cwd = os.path.dirname(cwd)
-    else:
-        cwd = os.path.dirname(cwd)
+
 
     df = load_dataset(datatype, cwd)
     df = df[["metadata", "entities", "relations"]]
