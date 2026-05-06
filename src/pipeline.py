@@ -1,5 +1,6 @@
 from Utils.preprocessing import main as preprocessing
 from Utils.evaluation_metrics import *
+from Utils.concept_relation_extraction import main as concept_relation_extraction
 import os
 import sys
 os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':16:8'
@@ -80,7 +81,7 @@ def nerd_pipeline():
     dev_path = os.path.join(path, "Data", "raw", "Annotations", "Dev", "json_format", "dev.json")
 
     models = {
-        "allenaibiomed_roberta_base": os.path.join(path, "Data", "processed", "allenaibiomed_roberta_base epoch 8 dense.json"),
+        "model": os.path.join(path, "Data", "processed", "submission_NER(2).json"),
     }
 
     print("Mention-level Relation Extraction")
@@ -89,15 +90,72 @@ def nerd_pipeline():
   
         print(f"Metrics for model {name}")
         print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
-        print(f"Macro| {results[0]:>9.4} | {results[1]:>6.4} | {results[2]:>6.4} |")
-        print(f"Micro| {results[3]:>9.4} | {results[4]:>6.4} | {results[5]:>6.4} |")
+        print(f"Macro| {results[3]:>9.4} | {results[4]:>6.4} | {results[5]:>6.4} |")
+        print(f"Micro| {results[0]:>9.4} | {results[1]:>6.4} | {results[2]:>6.4} |")
         #print(f"Class F1:{results['class_f1']}") #Can be changed to class_precision, class_recall or class_f1
+
+    return
+
+
+def mention_level_RE_pipeline():
+
+    path = get_path()
+
+    dev_path = os.path.join(path, "Data", "raw", "Annotations", "Dev", "json_format", "dev.json")
+
+    # Expected per-pmid format: {"mention_level_relations": [{subject_text_span, subject_label, predicate, object_text_span, object_label}, ...]}
+    models = {
+        
+    }
+
+    print("Mention-level Relation Extraction")
+    for name, pred_path in models.items():
+        results = calculate_mention_re_metrics(dev_path, pred_path)
+
+        print(f"Metrics for model {name}")
+        print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
+        print(f"Macro| {results[3]:>9.4} | {results[4]:>6.4} | {results[5]:>6.4} |")
+        print(f"Micro| {results[0]:>9.4} | {results[1]:>6.4} | {results[2]:>6.4} |")
+
+    return
+
+def get_concept_re():
+    concept_relation_extraction("BioBERT-base", "dev" , "predictions") 
+    return
+
+
+def concept_level_RE_pipeline():
+
+    path = get_path()
+
+    dev_path = os.path.join(path, "Data", "raw", "Annotations", "Dev", "json_format", "dev.json")
+
+    models = {
+        "BioBERT-base": os.path.join(path, "Output", "dev_concept_level_relations_biobert_base_predictions.json"),
+        "BlueBERT-pubmed": os.path.join(path, "Output", "dev_concept_level_relations_bluebert_pubmed_predictions.json"),
+        "BlueBERT-mimic": os.path.join(path, "Output", "dev_concept_level_relations_bluebert_mimic_predictions.json"),
+        "RoBERTa": os.path.join(path, "Output", "dev_concept_level_relations_roberta_predictions.json"),
+        "RoBERTa-biomed": os.path.join(path, "Output", "dev_concept_level_relations_roberta_biomed_predictions.json"),
+        "SciBERT": os.path.join(path, "Output", "dev_concept_level_relations_scibert_predictions.json"),
+        "SciBERT-cased": os.path.join(path, "Output", "dev_concept_level_relations_scibert_cased_predictions.json"),
+    }
+
+    print("Concept-level Relation Extraction")
+    for name, pred_path in models.items():
+        results = calculate_concept_re_metrics(dev_path, pred_path)
+
+        print(f"Metrics for model {name}")
+        print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
+        print(f"Macro| {results[3]:>9.4} | {results[4]:>6.4} | {results[5]:>6.4} |")
+        print(f"Micro| {results[0]:>9.4} | {results[1]:>6.4} | {results[2]:>6.4} |")
 
     return
 
 
 if __name__ == "__main__":
     #get_data()
-    #ner_pipeline()
+    ner_pipeline()
     nerd_pipeline()
-    
+    #mention_level_RE_pipeline() 
+    #get_concept_re()
+    concept_level_RE_pipeline()

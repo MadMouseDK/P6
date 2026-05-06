@@ -296,7 +296,7 @@ def main(model_name, datatype, mode):
     path = get_path()
     models = {
         "BioBERT-base":  os.path.join(path, "Models", "BioBERT-base_NER", "output", "model-best"),
-        "BioBERT-large": os.path.join(path, "Models", "BioBERT-large_NER", "output", "model-best"),
+        "BioBERT-large": os.path.join(path, "Models", "BioBERT-large_NER", "output", "model-best"), #Not implemented
         "BlueBERT-pubmed": os.path.join(path, "Models", "BlueBERT-pubmed_NER", "output", "model-best"),
         "BlueBERT-mimic": os.path.join(path, "Models", "BlueBERT-mimic_NER", "output", "model-best"),
         "RoBERTa": os.path.join(path, "Models", "RoBERTa_NER", "output", "model-best"),
@@ -342,3 +342,10 @@ def main(model_name, datatype, mode):
 
 if __name__ == "__main__":
     main("BioBERT-base", "dev" , "predictions") 
+    #main("BioBERT-large", "dev" , "predictions")
+    main("BlueBERT-pubmed", "dev" , "predictions")
+    main("BlueBERT-mimic", "dev" , "predictions")
+    main("RoBERTa", "dev" , "predictions") 
+    main("RoBERTa-biomed", "dev" , "predictions") 
+    main("SciBERT", "dev" , "predictions") 
+    main("SciBERT-cased", "dev" , "predictions") 
