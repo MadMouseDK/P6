@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 #Fixing RNG for reproducibility
 seed = 1337
-spacy.prefer_gpu(False)
+spacy.prefer_gpu(False) # type: ignore
 np.random.seed(seed)
 random.seed(seed)
 try:
@@ -60,8 +60,8 @@ def ner_pipeline():
     print("Exact match evaluation metrics:")
     for name, info in models.items():
         #print(f"Running model: {name}")
-        nlp = spacy.load(info)
-        doc_bin = DocBin().from_disk(os.path.join(path, "Data", "processed","dev_data_NER.spacy"))
+        nlp = spacy.load(info) #Model prediction
+        doc_bin = DocBin().from_disk(os.path.join(path, "Data", "processed","dev_data_NER.spacy"))#Ground truth
         docs = list(doc_bin.get_docs(nlp.vocab))
         results = calculate_metrics(nlp, docs)
         
@@ -77,27 +77,27 @@ def re_pipeline():
 
     path = get_path()
 
-    
+    gold_path = os.path.join(path, "Data", "raw", "Annotations", "Dev", "json_format", "dev.json")
+
     models = {
-        "SciBERT": os.path.join(path, "Models", "SciBERT_NER", "output", "model-best"),
+        "allenaibiomed_roberta_base": os.path.join(path, "Data", "processed", "allenaibiomed_roberta_base epoch 8 dense.json"),
     }
-    
+
     print("Mention level Relation Extraction")
-    for name, info in models.items():
-        
-        
+    for name, pred_path in models.items():
+        results = calculate_re_metrics(gold_path, pred_path) #Two json files
+
         print(f"Metrics for model {name}")
         print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
         print(f"Macro| {results['macro'][0]:>9.4} | {results['macro'][1]:>6.4} | {results['macro'][2]:>6.4} |")
         print(f"Micro| {results['micro'][0]:>9.4} | {results['micro'][1]:>6.4} | {results['micro'][2]:>6.4} |")
         #print(f"Class F1:{results['class_f1']}") #Can be changed to class_precision, class_recall or class_f1
-  
 
-    return 
+    return
 
 
 if __name__ == "__main__":
-    prepare_data()
-    ner_pipeline()
-    #re_pipeline()
+    #prepare_data()
+    #ner_pipeline()
+    re_pipeline()
     
