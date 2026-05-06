@@ -36,7 +36,7 @@ def get_path():
         path = os.path.dirname(path)
     return path
 
-def prepare_data():
+def get_data():
     preprocessing("train")
     preprocessing("dev")
     return 
@@ -56,14 +56,14 @@ def ner_pipeline():
         "BioBERT-base": os.path.join(path, "Models", "BioBERT-base_NER", "output", "model-best")
     }
     
-
+    
     print("Exact match evaluation metrics:")
     for name, info in models.items():
-        #print(f"Running model: {name}")
+        print(f"Running model: {name}")
         nlp = spacy.load(info) #Model prediction
         doc_bin = DocBin().from_disk(os.path.join(path, "Data", "processed","dev_data_NER.spacy"))#Ground truth
         docs = list(doc_bin.get_docs(nlp.vocab))
-        results = calculate_metrics(nlp, docs)
+        results = calculate_ner_metrics(nlp, docs)
         
         print(f"Metrics for model {name}")
         print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
@@ -73,31 +73,31 @@ def ner_pipeline():
 
     return 
 
-def re_pipeline():
+def nerd_pipeline():
 
     path = get_path()
 
-    gold_path = os.path.join(path, "Data", "raw", "Annotations", "Dev", "json_format", "dev.json")
+    dev_path = os.path.join(path, "Data", "raw", "Annotations", "Dev", "json_format", "dev.json")
 
     models = {
         "allenaibiomed_roberta_base": os.path.join(path, "Data", "processed", "allenaibiomed_roberta_base epoch 8 dense.json"),
     }
 
-    print("Mention level Relation Extraction")
+    print("Mention-level Relation Extraction")
     for name, pred_path in models.items():
-        results = calculate_re_metrics(gold_path, pred_path) #Two json files
-
+        results = calculate_nerd_metrics(dev_path, pred_path) #Two json files
+  
         print(f"Metrics for model {name}")
         print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
-        print(f"Macro| {results['macro'][0]:>9.4} | {results['macro'][1]:>6.4} | {results['macro'][2]:>6.4} |")
-        print(f"Micro| {results['micro'][0]:>9.4} | {results['micro'][1]:>6.4} | {results['micro'][2]:>6.4} |")
+        print(f"Macro| {results[0]:>9.4} | {results[1]:>6.4} | {results[2]:>6.4} |")
+        print(f"Micro| {results[3]:>9.4} | {results[4]:>6.4} | {results[5]:>6.4} |")
         #print(f"Class F1:{results['class_f1']}") #Can be changed to class_precision, class_recall or class_f1
 
     return
 
 
 if __name__ == "__main__":
-    #prepare_data()
+    #get_data()
     #ner_pipeline()
-    re_pipeline()
+    nerd_pipeline()
     
