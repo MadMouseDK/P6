@@ -30,15 +30,21 @@ except ImportError:
     pass
 
 #Pipeline skeleton
-
-def pipeline():
-    preprocessing("train")
-    preprocessing("dev")
-    
+def get_path():
     path = os.getcwd()
     if path.endswith("src"):
         path = os.path.dirname(path)
+    return path
 
+def prepare_data():
+    preprocessing("train")
+    preprocessing("dev")
+    return 
+
+
+def ner_pipeline():
+    
+    path = get_path()
     
     models = {
         "SciBERT": os.path.join(path, "Models", "SciBERT_NER", "output", "model-best"),
@@ -63,13 +69,35 @@ def pipeline():
         print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
         print(f"Macro| {results['macro'][0]:>9.4} | {results['macro'][1]:>6.4} | {results['macro'][2]:>6.4} |")
         print(f"Micro| {results['micro'][0]:>9.4} | {results['micro'][1]:>6.4} | {results['micro'][2]:>6.4} |")
-        print(f"Class F1:{results['class_f1']}") #Can be changed to class_precision, class_recall or class_f1
+        #print(f"Class F1:{results['class_f1']}") #Can be changed to class_precision, class_recall or class_f1
+
+    return 
+
+def re_pipeline():
+
+    path = get_path()
+
+    
+    models = {
+        "SciBERT": os.path.join(path, "Models", "SciBERT_NER", "output", "model-best"),
+    }
+    
+    print("Mention level Relation Extraction")
+    for name, info in models.items():
+        
+        
+        print(f"Metrics for model {name}")
+        print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
+        print(f"Macro| {results['macro'][0]:>9.4} | {results['macro'][1]:>6.4} | {results['macro'][2]:>6.4} |")
+        print(f"Micro| {results['micro'][0]:>9.4} | {results['micro'][1]:>6.4} | {results['micro'][2]:>6.4} |")
+        #print(f"Class F1:{results['class_f1']}") #Can be changed to class_precision, class_recall or class_f1
   
 
     return 
 
 
-
 if __name__ == "__main__":
-    pipeline()
+    prepare_data()
+    ner_pipeline()
+    #re_pipeline()
     
