@@ -9,16 +9,15 @@ def sub_scr(model: str):
     if path.endswith("Utils"):
         path = os.path.dirname(path)
         path = os.path.dirname(path)
-    data_path = os.path.join(path, "Data", "raw", "Articles", "csv_format", "articles_dev.csv")
+    data_path = os.path.join(path, "Data", "raw", "Annotations", "Test", "articles_test.csv")
     test_set = pd.read_csv(data_path, sep = '|')
     test_set = test_set[["pmid","title", "abstract"]]
-    #test_set = test_set[:10] # choosing 10 just for now
     allowed_values = ["RoBERTa",
+                      "RoBERTa-biomed",
                       "SciBERT",
                       "BioBERT-base",
-                      "BioBERT-large",
-                      "BlueBERT-pubmed_NER",
-                      "BlueBERT-pubmed-mimic_NER"]
+                      "BlueBERT-pubmed",
+                      "BlueBERT-pubmed-mimic"]
     if model not in allowed_values:
         raise ValueError(f"{model} value not allowed. Allowed values: {allowed_values}")
     model_path = os.path.join(path, "Models", f"{model}_NER", "output", "model-best")
@@ -50,9 +49,9 @@ def sub_scr(model: str):
                 "label": ent.label_
                 })
 
-    output_path = os.path.join(path, "Output", "submission_NER.json")
+    output_path = os.path.join(path, "Output", f"submission_NER_{model}.json")
     with open(output_path, "w") as f:
         json.dump(result, f, indent = 4)
     return result
     
-NER = sub_scr("RoBERTa")
+NER = sub_scr("SciBERT")
