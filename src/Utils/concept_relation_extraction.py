@@ -126,6 +126,12 @@ def load_documents(path, datatype):
         path = os.path.join(path, "Dev", "json_format", "dev.json")
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
+    if datatype == "test":
+        path =os.path.dirname(path)
+        path =os.path.dirname(path)
+        path = os.path.join(path, "Test", "articles_test.json")
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
 
     # Train: merge all quality tiers into one dict
     train_files = [
@@ -154,8 +160,9 @@ def extract_from_predictions(documents, nlp, kb_index, sorted_synonyms):
 
     for idx, (pmid, doc_data) in enumerate(documents.items(), 1):
 
-        # Get the title and abstract text
-        meta = doc_data.get("metadata", {})
+        # Get the title and abstract text.
+        # Dev/train wrap them in a "metadata" dict; the test set has them at top level.
+        meta = doc_data.get("metadata", doc_data)
         texts = [s for s in [meta.get("title", ""), meta.get("abstract", "")] if s]
 
         seen = set()      # tracks which (subject, predicate, object) we've already added
@@ -341,11 +348,11 @@ def main(model_name, datatype, mode):
 
 
 if __name__ == "__main__":
-    main("BioBERT-base", "dev" , "predictions") 
+    #main("BioBERT-base", "dev" , "predictions") 
     #main("BioBERT-large", "dev" , "predictions")
-    main("BlueBERT-pubmed", "dev" , "predictions")
-    main("BlueBERT-mimic", "dev" , "predictions")
-    main("RoBERTa", "dev" , "predictions") 
-    main("RoBERTa-biomed", "dev" , "predictions") 
-    main("SciBERT", "dev" , "predictions") 
-    main("SciBERT-cased", "dev" , "predictions") 
+    #main("BlueBERT-pubmed", "dev" , "predictions")
+    #main("BlueBERT-mimic", "dev" , "predictions")
+    #main("RoBERTa", "dev" , "predictions") 
+    #main("RoBERTa-biomed", "dev" , "predictions") 
+    #main("SciBERT", "dev" , "predictions") 
+    main("SciBERT-cased", "test" , "predictions") 

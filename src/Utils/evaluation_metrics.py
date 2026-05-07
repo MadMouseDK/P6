@@ -2,6 +2,8 @@ from typing import List, Dict
 import json
 
 #Class key define how they are aggregated by either entities or relation
+#"label" for NER/NERD
+#"predicate" for RE
 def get_metrics(dev_list, pred_list, class_key): 
     classes = set()
     for r in dev_list:
