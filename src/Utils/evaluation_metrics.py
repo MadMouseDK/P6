@@ -1,7 +1,8 @@
 from typing import List, Dict
 import json
 
-def get_metrics(dev_list, pred_list, class_key):
+#Class key define how they are aggregated by either entities or relation
+def get_metrics(dev_list, pred_list, class_key): 
     classes = set()
     for r in dev_list:
         classes.add(r[class_key])
@@ -70,7 +71,6 @@ def get_metrics(dev_list, pred_list, class_key):
 def get_json(path: str) -> Dict:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
-
 
 def get_ner_entities(docs):
     data_list = []

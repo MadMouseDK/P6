@@ -30,7 +30,7 @@ try:
 except ImportError:
     pass
 
-#Pipeline skeleton
+
 def get_path():
     path = os.getcwd()
     if path.endswith("src"):
@@ -42,6 +42,15 @@ def get_data():
     preprocessing("dev")
     return 
 
+def get_concept_re():
+    concept_relation_extraction("BioBERT-base", "dev" , "predictions") 
+    return
+
+def print_metrics(results):
+    print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
+    print(f"Macro| {results[3]:>9.4} | {results[4]:>6.4} | {results[5]:>6.4} |")
+    print(f"Micro| {results[0]:>9.4} | {results[1]:>6.4} | {results[2]:>6.4} |")
+    return
 
 def ner_pipeline():
     
@@ -65,12 +74,9 @@ def ner_pipeline():
         doc_bin = DocBin().from_disk(os.path.join(path, "Data", "processed","dev_data_NER.spacy"))#Ground truth
         docs = list(doc_bin.get_docs(nlp.vocab))
         results = calculate_ner_metrics(nlp, docs)
-        
+
         print(f"Metrics for model {name}")
-        print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
-        print(f"Macro| {results['macro'][0]:>9.4} | {results['macro'][1]:>6.4} | {results['macro'][2]:>6.4} |")
-        print(f"Micro| {results['micro'][0]:>9.4} | {results['micro'][1]:>6.4} | {results['micro'][2]:>6.4} |")
-        #print(f"Class F1:{results['class_f1']}") #Can be changed to class_precision, class_recall or class_f1
+        print_metrics(results)
 
     return 
 
@@ -87,12 +93,8 @@ def nerd_pipeline():
     print("Mention-level Relation Extraction")
     for name, pred_path in models.items():
         results = calculate_nerd_metrics(dev_path, pred_path) #Two json files
-  
         print(f"Metrics for model {name}")
-        print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
-        print(f"Macro| {results[3]:>9.4} | {results[4]:>6.4} | {results[5]:>6.4} |")
-        print(f"Micro| {results[0]:>9.4} | {results[1]:>6.4} | {results[2]:>6.4} |")
-        #print(f"Class F1:{results['class_f1']}") #Can be changed to class_precision, class_recall or class_f1
+        print_metrics(results)
 
     return
 
@@ -113,15 +115,10 @@ def mention_level_RE_pipeline():
         results = calculate_mention_re_metrics(dev_path, pred_path)
 
         print(f"Metrics for model {name}")
-        print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
-        print(f"Macro| {results[3]:>9.4} | {results[4]:>6.4} | {results[5]:>6.4} |")
-        print(f"Micro| {results[0]:>9.4} | {results[1]:>6.4} | {results[2]:>6.4} |")
+        print_metrics(results)
 
     return
 
-def get_concept_re():
-    concept_relation_extraction("BioBERT-base", "dev" , "predictions") 
-    return
 
 
 def concept_level_RE_pipeline():
@@ -145,17 +142,15 @@ def concept_level_RE_pipeline():
         results = calculate_concept_re_metrics(dev_path, pred_path)
 
         print(f"Metrics for model {name}")
-        print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
-        print(f"Macro| {results[3]:>9.4} | {results[4]:>6.4} | {results[5]:>6.4} |")
-        print(f"Micro| {results[0]:>9.4} | {results[1]:>6.4} | {results[2]:>6.4} |")
+        print_metrics(results)
 
     return
 
 
 if __name__ == "__main__":
     #get_data()
-    ner_pipeline()
-    nerd_pipeline()
-    #mention_level_RE_pipeline() 
     #get_concept_re()
+    #ner_pipeline()
+    #nerd_pipeline()
+    #mention_level_RE_pipeline() 
     concept_level_RE_pipeline()
