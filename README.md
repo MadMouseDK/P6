@@ -1,13 +1,19 @@
 # P6
-Repository for the bachelor project with the data necessary for the challenge GutBrainIE @ CLEF 2026 task 6, and exploration of relevant theory.
+Repository for the bachelor project with the data necessary for the challenge GutBrainIE @ CLEF 2026 task 6.
 
 
-# Useful libaries/resources
+# Depedencies
+This project has been tested on Python 3.12, but it should also work for 3.11. Newer version might not work since some packages have not been updated yet. The depedencies for this project can be found in requirement.txt file or pyproject.toml. To install the depedencies the following commands can be used: 
+```pip install -r requirements.txt```
+pyproject.toml,
+```pip install .```
 
 
-- [spaCy](https://spacy.io/) provides NLP capabilites with support for pipelines and custom Pytorch Models. [Tutorial](https://www.youtube.com/watch?v=dIUTsFT2MeQ)
-- [PyTorch](https://pytorch.org/) widely used ML libary used to create custom models
-- [Hugging Face Transformers](https://huggingface.co/docs/transformers/index) can be used to find pretrained transformers
+# Data
+The data for this project is from the [GutBrain@CLEF2026](https://hereditary.dei.unipd.it/challenges/gutbrainie/2026/) challenge. After downloading the data, the two files `Annotations` and `Articles` should be placed inside of `./Data/raw/`. 
 
+# Preprocessing
+The preprocessing file ´preprocessing.py` will generate the necessary files by running it just makes sure the data is downloaded and is in the correct place. 
 
-Other usefull libaries could be: TempFile, nltk
+# Trainning and Evaluating models
+
