@@ -1,22 +1,23 @@
-from Utils.preprocessing import main as preprocessing
-from Utils.evaluation_metrics import *
-from Utils.concept_relation_extraction import main as concept_relation_extraction
 import os
-import sys
-os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':16:8'
-os.environ['PYTHONHASHSEED'] = '1337'
-import spacy
-from spacy.tokens import DocBin
-import numpy as np
 import random
 import warnings
+
+import numpy as np
+import spacy
+from spacy.tokens import DocBin
+
+from Utils.concept_relation_extraction import main as concept_relation_extraction
+from Utils.evaluation_metrics import *
+from Utils.processing import main as preprocessing
+
 warnings.filterwarnings("ignore", category=FutureWarning) 
 #FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
-
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
+os.environ["PYTHONHASHSEED"] = "1337"
 #Fixing RNG for reproducibility
 seed = 1337
 spacy.prefer_gpu(False) # type: ignore
-np.random.seed(seed)
+np.random.Generator(seed)
 random.seed(seed)
 try:
     import torch
@@ -37,14 +38,17 @@ def get_path():
         path = os.path.dirname(path)
     return path
 
+
 def get_data():
     preprocessing("train")
     preprocessing("dev")
-    return 
+    return
+
 
 def get_concept_re():
-    concept_relation_extraction("BioBERT-base", "dev" , "predictions") 
+    concept_relation_extraction("BioBERT-base", "dev" , "predictions")
     return
+
 
 def print_metrics(results):
     print(f"     | {'Precision':>9} | {'Recall':>6} | {'F1':>6} |")
@@ -53,9 +57,7 @@ def print_metrics(results):
     return
 
 def ner_pipeline():
-    
     path = get_path()
-    
     models = {
         "SciBERT": os.path.join(path, "Models", "SciBERT_NER", "output", "model-best"),
         "SciBERT-cased": os.path.join(path, "Models", "SciBERT-cased_NER", "output", "model-best"),
@@ -65,8 +67,7 @@ def ner_pipeline():
         "BLueBERT-mimic": os.path.join(path, "Models", "BlueBERT-mimic_NER", "output", "model-best"),
         "BioBERT-base": os.path.join(path, "Models", "BioBERT-base_NER", "output", "model-best")
     }
-    
-    
+
     print("Exact match evaluation metrics:")
     for name, info in models.items():
         print(f"Running model: {name}")
@@ -77,15 +78,12 @@ def ner_pipeline():
 
         print(f"Metrics for model {name}")
         print_metrics(results)
+    return
 
-    return 
 
 def nerd_pipeline():
-
     path = get_path()
-
     dev_path = os.path.join(path, "Data", "raw", "Annotations", "Dev", "json_format", "dev.json")
-
     models = {
         "model": os.path.join(path, "Data", "processed", "submission_NER(2).json"),
     }
@@ -99,16 +97,11 @@ def nerd_pipeline():
     return
 
 
-def mention_level_RE_pipeline():
-
+def mention_level_re_pipeline():
     path = get_path()
-
     dev_path = os.path.join(path, "Data", "raw", "Annotations", "Dev", "json_format", "dev.json")
-
     # Expected per-pmid format: {"mention_level_relations": [{subject_text_span, subject_label, predicate, object_text_span, object_label}, ...]}
-    models = {
-        
-    }
+    models = {}
 
     print("Mention-level Relation Extraction")
     for name, pred_path in models.items():
@@ -120,13 +113,9 @@ def mention_level_RE_pipeline():
     return
 
 
-
-def concept_level_RE_pipeline():
-
+def concept_level_re_pipeline():
     path = get_path()
-
     dev_path = os.path.join(path, "Data", "raw", "Annotations", "Dev", "json_format", "dev.json")
-
     models = {
         "BioBERT-base": os.path.join(path, "Output", "dev_concept_level_relations_biobert_base_predictions.json"),
         "BlueBERT-pubmed": os.path.join(path, "Output", "dev_concept_level_relations_bluebert_pubmed_predictions.json"),
@@ -152,5 +141,5 @@ if __name__ == "__main__":
     #get_concept_re()
     #ner_pipeline()
     #nerd_pipeline()
-    #mention_level_RE_pipeline() 
-    concept_level_RE_pipeline()
+    #mention_level_RE_pipeline()
+    concept_level_re_pipeline()
