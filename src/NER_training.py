@@ -28,6 +28,9 @@ POSSIBLE_RELATIONS = {
     "compared to": 0.0,
 }
 
+Doc.set_extension("rel", default={}, force=True)
+Doc.set_extension("rel_kb", default={}, force=True)
+
 def load_pickle(datatype: str) -> list:
     allowed_values = ["train", "dev"]
     if datatype not in allowed_values:
@@ -44,26 +47,17 @@ def load_pickle(datatype: str) -> list:
     return None
 
 
-train_data = load_pickle("train")
-dev_data = load_pickle("dev")
-
-Doc.set_extension("rel", default={}, force=True)
-Doc.set_extension("rel_kb", default={})
-Doc.set_extension("annotator", default=str)
-
 nlp = spacy.blank("en")
 
-
 def create_spacy_docbin(data: list) -> DocBin:
-
     db = DocBin()
     entities_skipped = 0
     start_end_idx = []
-    for i, (text, annot) in enumerate(tqdm(data)):
+    for i, (text, metadata) in enumerate(tqdm(data)):
         token_mapping = {}
         doc = nlp.make_doc(text)
         ents = []
-        for start, end, label, _ in annot["entities"]:
+        for start, end, label, _ in metadata["entities"]:
             if start > end:
                 print(f"Wrong start: {start}, end: {end}")
                 start, end = end, start
@@ -91,7 +85,7 @@ def create_spacy_docbin(data: list) -> DocBin:
                     relations[(ent_1.start, ent_2.start)] = POSSIBLE_RELATIONS.copy()
 
 
-        for subject_idx, subject_uri, predicate, object_idx, object_uri in annot["relations"]:
+        for subject_idx, subject_uri, predicate, object_idx, object_uri in metadata["relations"]:
             try:
                 relations_kb[(subject_uri, object_uri)] = POSSIBLE_RELATIONS.copy()
                 subject_idx = token_mapping[subject_idx]
@@ -105,15 +99,10 @@ def create_spacy_docbin(data: list) -> DocBin:
                 print(f"Failed for document: {i}")
                 continue
 
-        doc._.annotator = annot["annotator"]
         doc._.rel = relations
         doc._.rel_kb = relations_kb
         db.add(doc)
     return db
-
-
-train = create_spacy_docbin(train_data)
-dev = create_spacy_docbin(dev_data)
 
 
 def save_spacy(data_spacy: DocBin, name: str) -> None:
@@ -121,12 +110,8 @@ def save_spacy(data_spacy: DocBin, name: str) -> None:
     folder = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
     if cwd.endswith(folder):
         cwd = os.path.dirname(cwd)
-    path = os.path.join(cwd, "Data", "processed", f"{name}_data_NER.spacy")
+    path = os.path.join(cwd, "Data", "processed", f"{name}_data_NER_V4.spacy")
     data_spacy.to_disk(path)
-
-
-save_spacy(train, "train")
-save_spacy(dev, "dev")
 
 
 def train_spacy_model(model_name: str):
@@ -173,7 +158,14 @@ def train_spacy_model(model_name: str):
     if result.returncode != 0:
         print(f"Training failed with exit code {result.returncode}")
 
+train_data = load_pickle("train")
+dev_data = load_pickle("dev")
 
+train = create_spacy_docbin(train_data)
+dev = create_spacy_docbin(dev_data)
+
+save_spacy(train, "train")
+save_spacy(dev, "dev")
 
 """
 train_spacy_model("RoBERTa")
